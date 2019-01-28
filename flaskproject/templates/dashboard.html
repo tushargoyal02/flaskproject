@@ -1,0 +1,48 @@
+
+<!-- we are extending from header.html -->
+
+{% extends "header.html" %}
+{% block body %}
+
+
+
+<!-- WE HAVE THIS AS BASIC LINK IN OUR DASHBOARD-->
+<div role="tabpanel">
+
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" role="tablist">
+          <li role="presentation" class="active"><a href="#basics" aria-controls="basics" role="tab" data-toggle="tab">Basics</a></li>
+          &nbsp;&nbsp;&nbsp;
+          <li role="presentation"><a href="#wdev" aria-controls="wdev" role="tab" data-toggle="tab">Web Dev</a></li>
+          &nbsp;&nbsp;&nbsp;
+          <li role="presentation"><a href="#dan" aria-controls="dan" role="tab" data-toggle="tab">Data Analysis</a></li>
+      
+        </ul>
+      
+        <!-- Tab panes -->
+      <div class="tab-content">
+        <div role="tabpanel" class="tab-pane fade in active" id="basics">
+          <ul>
+              <!-- here it is for content managemnt system from python-->
+             
+             {% for t in TOPIC_DICT["Basics"] %}
+        <!-- t is the list in content.py and Basics is the link in the dashboard-->
+
+            
+            <!-- t[1] is the link of list and t[0] is the name of the list(key)-->
+            <li style="margin-right:1000px;"> <a href="{{ t[1] }}">{{ t[0] }}</a>
+            &nbsp;</li>
+              {% endfor %}
+          </ul>
+        </div>
+        
+        <div role="tabpanel" class="tab-pane fade" id="wdev">web dev</div>
+      
+        <div role="tabpanel" class="tab-pane fade" id="dan">Data analysis!#Q$@!#</div>
+      
+      </div>
+      
+      </div>
+<p>hello bbaa</p>
+{% endblock %}
+
