@@ -1,11 +1,10 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <title> python!!! </title>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-       <!-- The statement below states that 
-              we are looking for url in static folder with the desired info-->
+       <!-- The statement below states that  we are looking for url in static folder with the desired info-->
         <link href="{{ url_for('static',filename='css/bootstrap.min.css') }}" rel="stylesheet">
         <link rel="shortcut icon"  href="{{ url_for('static',filename='favicon.ico.png') }}">
 	
@@ -30,14 +29,26 @@
     <ul class="nav navbar-nav navbar-right">
 
         <div style="margin-right: 5px; margin-left: 950px; margin-top: -65px; margin-bottom: 5px;"  class="container-fluid">
-            <h5>
-      
+            
+       <!-- this is for the session logged in user-->   
+          <h5>
+
+            {% if session.logged_in %}
             <a href="/support-donate/"> <span class="glyphicon glyphicon-heart"></span> Support   </a>&nbsp;&nbsp;
-        
+            <a href="/logout/"><span class="glyphicon glyphicon-log-in"></span> Logout   </a>&nbsp;
+           
+            {% else %} 
+     
+            <a href="/support-donate/"> <span class="glyphicon glyphicon-heart"></span> Support   </a>&nbsp;&nbsp;
             <a href="/login/"><span class="glyphicon glyphicon-log-in"></span> Login   </a>&nbsp;
-      
-      
-          <a href="/register/"><span class="glyphicon glyphicon-pencil"></span> Sign up</a><h5>
+            <a href="/register/"><span class="glyphicon glyphicon-pencil"></span> Sign up</a>
+           
+            {% endif %}
+
+            <!-- here it's end for the user logged in-->
+          </h5>
+          
+          
           </div>
             </ul>
         
@@ -54,7 +65,6 @@
     <div class="border-row" style="width:100%;  margin-bottom:15px;">
     </div>" 
     <div class="container-fluid" align="center" style="min-height: 100px">
-      
         {% block body %}{% endblock %}
     </div> 
            <a href="/dashboard/">

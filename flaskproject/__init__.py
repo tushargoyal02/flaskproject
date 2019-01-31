@@ -3,9 +3,13 @@ from flask import Flask , render_template,flash, url_for , request,redirect,sess
 # render_template is for redirecting and flask is send the msg(pop up)
 from contentManagement import content
 TOPIC_DICT = content()
+import pymysql
+
+conn = pymysql.connect(host='localhost',database='flaskproject',user='root',password='  l')
+c = conn.cursor()
 
 # TO GET CONNECTED TO DATABASE
-from dbconnect import connection
+#from dbconnect import connection
 
 #FOR SIGNUP FORM WE NEED WTFORMS(used to make form in python)
 from wtforms import Form,TextField,validators, ValidationError,PasswordField,BooleanField
@@ -18,7 +22,10 @@ from pymysql import escape_string as thwart
 import gc
 
 
+from functools import wraps
+
 app = Flask(__name__)
+app.secret_key = 'my unobvious secret key'
 
 @app.route("/")
 def homepage():
@@ -38,12 +45,14 @@ def header():
   #return ("This is our dashboard")
    return render_template("header.html")
 
+#----------------------------------
 
 @app.errorhandler(404)
 def page_not_found(e):
   #return ("This is our dashboard")
    return render_template("404.html")
 
+#--------------------------------------------------------
 
 @app.route("/slashboard/")
 def slashboard():
@@ -56,9 +65,9 @@ def slashboard():
 
 # -------------------------------------------------
 
-class registerform(Form):
+class RegistrationForm(Form):
    username = TextField('Username',[validators.Length(min=3,max=20)])
-   email = TextField('Email',[validators.Length(min=8,max=60)])
+   email = TextField('Email Address',[validators.Length(min=8,max=60)])
    password = PasswordField('Password',[validators.Required(),
                         validators.EqualTo('confirm',message="Password doesnt match!")])
 
@@ -69,10 +78,9 @@ class registerform(Form):
 
 
 @app.route("/register/", methods = ["GET","POST"])
-def register_page():
-   try:
-      cur,conn = connection()
-      
+def register():
+   #return("hello baby")
+   try:      
       form = RegistrationForm(request.form)
 
 # below mean that form is POST and Validated as required
@@ -80,20 +88,24 @@ def register_page():
          username = form.username.data 
          email = form.email.data
          password = sha256_crypt.encrypt((str(form.password.data)))
-         
+     #    conn,c = connection()
+      
+
          #CHECKING THAT WHETHER WE HAVE ANY USER WITH THIS NAME IN DATABASE
                #thwart(username)=> impiles we are not allowing to execute more querries(sql injection)
-         x = cur.execute("SELECT * FROM project WHERE username = (%s)",(thwart(username)))
-         if int(len(x)) > 0:
+         x = c.execute("SELECT * FROM project WHERE username = (%s)",(thwart(username)))
+   #      x.fetchone()
+
+         if int(x) > 0:
             print("This username is already taken! Try some other name.")
             return render_template("register.html",form=form)
 
          else :
-            cur.execute("INSERT INTO project (username,password,email,tracking) VALUES (%s,%s,%s,%s)",
-                        (thwart(username),thwart(password),thwart(email),thwart("introduction-to-python-programming")))
+            c.execute("INSERT INTO project (username,password,email,tracking) VALUES (%s,%s,%s,%s)",
+                        (thwart(username),thwart(password),thwart(email),thwart("/introduction-to-python-programming/")))
 
             conn.commit()
-            cur.close()
+            c.close()
             conn.close()
             gc.collect() # to save memory basically we import gc but neccessary
 
@@ -110,34 +122,81 @@ def register_page():
       
 #----------------------------------------------------------------------------------------
 
+def logged_required(f):
+   @wraps(f)
+   def wrap(*args,**kwargs):
+      # if the user is logged in than will return f with the argument
+      if 'logged_in' in session:
+         return f(*args,**kwargs)
+
+      else:
+         flash("Please login in first")
+         return redirect(url_for('login_page'))
+   return wrap      
+
+@app.route("/logout/")
+@logged_required
+def logout():
+   session.clear()
+   flash("you have been logged out")
+   return redirect(url_for('login_page'))
+
+
 # WE ARE USING GET AND POST METHOD
 @app.route("/login/", methods = ["GET","POST"])
 def login_page():
-   error=None
+   print ('hey1')
+   flash("welcome to our page")
    try:
+      #this is for user login
+      print ('hey2')
       if request.method == "POST":
-         attempt_username = request.form['username']
-         attempt_password = request.form['password']
+         print ('hey5')
+         data = c.execute("SELECT * FROM project WHERE username = (%s)",
+                        thwart(request.form['username']))
+         data = c.fetchone()[2]  #this will be the password from the above
          
+         if sha256_crypt.verify(request.form['password'],data): #verifying the user put password with password fetch(return true or false)
+            session['logged_in'] = True
+            session['username'] = request.form['username']
+            flash("welcome home")
+            return redirect(url_for('dashboard'))
+         else:
+            error = "Invalid credentials! Try again later"
+
+      gc.collect()
+
+      return render_template("login.html",error=error)
+
+
+ #        attempt_username = request.form['username']
+  #       attempt_password = request.form['password']
+   #      
          #print(attempt_username)
-         flash(attempt_username)
+   #      flash(attempt_username)
 
       # it will keep on moving to dashboard because if function is going on!!
-         if attempt_username =="admin" and attempt_password == "password":
-            return redirect(url_for('dashboard'))   # it will move for the dashboard function(which will show its path)
+#         if attempt_username =="admin" and attempt_password == "password":
+ #           return redirect(url_for('dashboard'))   # it will move for the dashboard function(which will show its path)
 
-         else:
-            error = "Invalid Credinatial !! Please try it again later."
+  #       else:
+  #          error = "Invalid Credinatial !! Please try it again later."
 
-      return render_template("login.html")
+   #   return render_template("login.html")
 
 
 
    except Exception as e:
-      flash(e)
+      #flash(e)
+      #print ('hey3')
+      error = "Invalid credentials! Try again later"
+      #print ('hey4')
+      #return ('hello6')
       return render_template("login.html" , error = error) #error is used to show the error for debugging
    
 
 #--------------------------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+   #app.secret_key = "tushar goyal"
+  # app.config['SESSION_TYPE'] = 'filesystem'
+   app.run(debug=True)
